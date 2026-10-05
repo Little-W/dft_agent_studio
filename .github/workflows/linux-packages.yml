@@ -78,12 +78,28 @@ jobs:
           build/llama.cpp/bin/llama-server --version
           build/llama.cpp/bin/llama-finetune --version
 
-      - name: Configure and build
+      - name: Configure Studio
         run: |
-          cmake -S . -B build/package -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DQT_DEPLOY_USE_PATCHELF=ON \
+          if ! cmake -S . -B build/package -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DQT_DEPLOY_USE_PATCHELF=ON \
             -DDFT_LLAMA_SERVER_BINARY="$GITHUB_WORKSPACE/build/llama.cpp/bin/llama-server" \
-            -DDFT_LLAMA_FINETUNE_BINARY="$GITHUB_WORKSPACE/build/llama.cpp/bin/llama-finetune"
-          cmake --build build/package --parallel 2
+            -DDFT_LLAMA_FINETUNE_BINARY="$GITHUB_WORKSPACE/build/llama.cpp/bin/llama-finetune" \
+            > /tmp/studio-cmake-configure.log 2>&1; then
+            cat /tmp/studio-cmake-configure.log
+            detail=$(tail -n 12 /tmp/studio-cmake-configure.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
+            echo "::error title=Studio CMake configure failed::$detail"
+            exit 1
+          fi
+          cat /tmp/studio-cmake-configure.log
+
+      - name: Build Studio
+        run: |
+          if ! cmake --build build/package --parallel 2 > /tmp/studio-cmake-build.log 2>&1; then
+            tail -n 50 /tmp/studio-cmake-build.log
+            detail=$(tail -n 12 /tmp/studio-cmake-build.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
+            echo "::error title=Studio C++ build failed::$detail"
+            exit 1
+          fi
+          cat /tmp/studio-cmake-build.log
 
       - name: Run package checks
         run: |
