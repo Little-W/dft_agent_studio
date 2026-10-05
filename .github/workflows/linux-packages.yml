@@ -266,8 +266,6 @@ jobs:
           ./linuxdeploy-x86_64.AppImage --appdir AppDir --desktop-file AppDir/usr/share/applications/dft-agent-studio.desktop --icon-file AppDir/usr/share/icons/hicolor/512x512/apps/dft-agent-studio.png --plugin qt
 
       - name: Create AppImage executable
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
           ./linuxdeploy-x86_64.AppImage --appimage-extract
           curl --http1.1 --fail --location --retry 5 --connect-timeout 10 --max-time 120 \
