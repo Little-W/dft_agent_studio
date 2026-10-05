@@ -3044,8 +3044,17 @@ QVariantMap stageConfigured(const QVariantMap &project, const QString &workspace
     const QVariantMap execution = metadata.value(QStringLiteral("dft_execution")).toMap();
     ProjectInputs inputs;
     parseProject(project, arguments, agentRoot, &inputs);
-    if (!inputs.unsupported.isEmpty() || !inputs.configurationErrors.isEmpty() || !inputs.missingFiles.isEmpty())
-        return failure(QStringLiteral("Configured project cannot be staged by the native flow slice; see readiness diagnostics."));
+    if (!inputs.unsupported.isEmpty() || !inputs.configurationErrors.isEmpty() || !inputs.missingFiles.isEmpty()) {
+        QStringList diagnostics;
+        for (const QString &reason : std::as_const(inputs.configurationErrors))
+            diagnostics.append(QStringLiteral("configuration: %1").arg(reason));
+        for (const QString &reason : std::as_const(inputs.missingFiles))
+            diagnostics.append(QStringLiteral("missing input: %1").arg(reason));
+        for (const QString &reason : std::as_const(inputs.unsupported))
+            diagnostics.append(QStringLiteral("unsupported: %1").arg(reason));
+        return failure(QStringLiteral("Configured project cannot be staged: %1")
+                           .arg(diagnostics.join(QStringLiteral("; "))));
+    }
     const QString root = canonicalDirectory(inputs.projectRoot, agentRoot);
     const QString stagingRoot = canonicalDirectory(workspaceRoot.isEmpty() ? inputs.workspaceRoot : workspaceRoot, agentRoot);
     if (stagingRoot.isEmpty())
