@@ -16,6 +16,14 @@ find_package(ZLIB REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(KF6Parts QUIET)
 
+if(TARGET yaml-cpp::yaml-cpp)
+    set(DFT_YAML_CPP_TARGET yaml-cpp::yaml-cpp)
+elseif(TARGET yaml-cpp)
+    set(DFT_YAML_CPP_TARGET yaml-cpp)
+else()
+    message(FATAL_ERROR "yaml-cpp was found but did not define a supported CMake target")
+endif()
+
 qt_standard_project_setup(REQUIRES 6.5)
 if(QT_KNOWN_POLICY_QTP0004)
     qt_policy(SET QTP0004 NEW)
@@ -178,7 +186,7 @@ qt_add_resources(dft-agent-studio "dft_app_icon"
     FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/icons/dft-agent-studio.png"
 )
 
-target_link_libraries(dft-agent-studio PRIVATE Qt6::Concurrent Qt6::Core Qt6::Gui Qt6::Network Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::Widgets SQLite3::SQLite3 ZLIB::ZLIB yaml-cpp::yaml-cpp)
+target_link_libraries(dft-agent-studio PRIVATE Qt6::Concurrent Qt6::Core Qt6::Gui Qt6::Network Qt6::Qml Qt6::Quick Qt6::QuickControls2 Qt6::Widgets SQLite3::SQLite3 ZLIB::ZLIB ${DFT_YAML_CPP_TARGET})
 target_compile_definitions(dft-agent-studio PRIVATE DFT_AGENT_STUDIO_VERSION="${PROJECT_VERSION}")
 
 add_executable(dft-training-data
@@ -368,7 +376,7 @@ add_library(dft-studio-cli-runtime STATIC
     src/studionativeapi.cpp
     src/studionativeapi.h
 )
-target_link_libraries(dft-studio-cli-runtime PUBLIC Qt6::Core Qt6::Gui Qt6::Network SQLite3::SQLite3 ZLIB::ZLIB yaml-cpp::yaml-cpp)
+    target_link_libraries(dft-studio-cli-runtime PUBLIC Qt6::Core Qt6::Gui Qt6::Network SQLite3::SQLite3 ZLIB::ZLIB ${DFT_YAML_CPP_TARGET})
 target_include_directories(dft-studio-cli-runtime PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 include(CTest)
@@ -604,7 +612,7 @@ if(BUILD_TESTING)
         src/studiotoolservice.cpp
         src/studiotoolservice.h
     )
-    target_link_libraries(dft-native-subagent-check PRIVATE Qt6::Core Qt6::Gui Qt6::Network SQLite3::SQLite3 ZLIB::ZLIB yaml-cpp::yaml-cpp)
+    target_link_libraries(dft-native-subagent-check PRIVATE Qt6::Core Qt6::Gui Qt6::Network SQLite3::SQLite3 ZLIB::ZLIB ${DFT_YAML_CPP_TARGET})
     target_include_directories(dft-native-subagent-check PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_compile_definitions(dft-native-subagent-check PRIVATE NATIVE_SUBAGENT_SERVICE_STANDALONE)
     add_test(NAME dft-native-subagent COMMAND dft-native-subagent-check)
@@ -635,7 +643,7 @@ if(BUILD_TESTING)
         src/dftreportevidenceservice.cpp
         src/dftreportevidenceservice.h
     )
-    target_link_libraries(dft-configured-dft-flow-check PRIVATE Qt6::Core yaml-cpp::yaml-cpp)
+    target_link_libraries(dft-configured-dft-flow-check PRIVATE Qt6::Core ${DFT_YAML_CPP_TARGET})
     target_include_directories(dft-configured-dft-flow-check PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     add_test(NAME dft-configured-dft-flow COMMAND dft-configured-dft-flow-check)
 
@@ -679,7 +687,7 @@ if(BUILD_TESTING)
         src/dftreportevidenceservice.cpp
         src/dftreportevidenceservice.h
     )
-    target_link_libraries(dft-studio-storage-api-check PRIVATE Qt6::Core Qt6::Gui Qt6::Network SQLite3::SQLite3 ZLIB::ZLIB yaml-cpp::yaml-cpp)
+    target_link_libraries(dft-studio-storage-api-check PRIVATE Qt6::Core Qt6::Gui Qt6::Network SQLite3::SQLite3 ZLIB::ZLIB ${DFT_YAML_CPP_TARGET})
     target_include_directories(dft-studio-storage-api-check PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     add_test(NAME dft-studio-storage-api COMMAND dft-studio-storage-api-check)
 
@@ -802,7 +810,7 @@ if(BUILD_TESTING)
         src/syntaxhighlighter.h
     )
 
-    target_link_libraries(dft-agent-studio-backend-check PRIVATE Qt6::Concurrent Qt6::Core Qt6::Gui Qt6::Network Qt6::Qml Qt6::Quick SQLite3::SQLite3 ZLIB::ZLIB yaml-cpp::yaml-cpp)
+    target_link_libraries(dft-agent-studio-backend-check PRIVATE Qt6::Concurrent Qt6::Core Qt6::Gui Qt6::Network Qt6::Qml Qt6::Quick SQLite3::SQLite3 ZLIB::ZLIB ${DFT_YAML_CPP_TARGET})
     target_include_directories(dft-agent-studio-backend-check PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
     add_test(NAME dft-agent-studio-backend COMMAND dft-agent-studio-backend-check)
@@ -904,7 +912,7 @@ add_executable(dft-agent-studio-storage
     src/dftreportevidenceservice.cpp
     src/dftreportevidenceservice.h
 )
-target_link_libraries(dft-agent-studio-storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network SQLite3::SQLite3 ZLIB::ZLIB yaml-cpp::yaml-cpp)
+target_link_libraries(dft-agent-studio-storage PRIVATE Qt6::Core Qt6::Gui Qt6::Network SQLite3::SQLite3 ZLIB::ZLIB ${DFT_YAML_CPP_TARGET})
 target_include_directories(dft-agent-studio-storage PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 install(TARGETS dft-agent-studio-storage RUNTIME DESTINATION bin)
 
