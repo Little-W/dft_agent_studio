@@ -263,10 +263,12 @@ int main(int argc, char **argv)
     compatibilityExecution.insert(QStringLiteral("filelist"), QStringLiteral("filelist.txt"));
     compatibilityMetadata.insert(QStringLiteral("dft_execution"), compatibilityExecution);
     compatibilityProject.insert(QStringLiteral("metadata"), compatibilityMetadata);
+    QVariantMap compatibilityArguments = runArguments;
+    compatibilityArguments.insert(QStringLiteral("source_exclude_files"),
+                                  QVariantList{QStringLiteral("orphan_switch.v")});
     const QVariantMap compatibilityStage = ConfiguredDftFlowService::stage(compatibilityProject,
         temp.filePath(QStringLiteral("compatibility-stage")),
-        QVariantMap{{QStringLiteral("source_exclude_files"), QVariantList{QStringLiteral("orphan_switch.v")}}},
-        agentRoot);
+        compatibilityArguments, agentRoot);
     const QVariantMap compatibilityStageRecord = compatibilityStage.value(QStringLiteral("result")).toMap();
     const QVariantMap compatibilitySource = compatibilityStageRecord.value(QStringLiteral("source")).toMap();
     const QVariantMap compatibilitySynthesis = compatibilitySource
@@ -304,7 +306,7 @@ int main(int argc, char **argv)
     verilogFormatMetadata.insert(QStringLiteral("dft_execution"), verilogFormatExecution);
     verilogFormatProject.insert(QStringLiteral("metadata"), verilogFormatMetadata);
     const QVariantMap verilogFormatStage = ConfiguredDftFlowService::stage(verilogFormatProject,
-        temp.filePath(QStringLiteral("verilog-format-stage")), {}, agentRoot);
+        temp.filePath(QStringLiteral("verilog-format-stage")), runArguments, agentRoot);
     const QVariantMap verilogFormatSource = verilogFormatStage.value(QStringLiteral("result")).toMap()
         .value(QStringLiteral("source")).toMap();
     const QString verilogFormatFlow = verilogFormatStage.value(QStringLiteral("result")).toMap()
@@ -335,10 +337,11 @@ int main(int argc, char **argv)
     ok &= require(writeFile(annotationSourcePath, annotationSource), "create RTL with a legacy state-encoding hint");
     const QVariantMap annotationProject = sampleProject(annotationRoot, library,
         temp.filePath(QStringLiteral("annotation-workspaces")));
+    QVariantMap annotationArguments = runArguments;
+    annotationArguments.insert(QStringLiteral("source_annotation_mode"),
+                               QStringLiteral("strip_unsupported_state_encoding_hints"));
     const QVariantMap annotationStage = ConfiguredDftFlowService::stage(annotationProject,
-        temp.filePath(QStringLiteral("annotation-stage")),
-        QVariantMap{{QStringLiteral("source_annotation_mode"), QStringLiteral("strip_unsupported_state_encoding_hints")}},
-        agentRoot);
+        temp.filePath(QStringLiteral("annotation-stage")), annotationArguments, agentRoot);
     const QVariantMap annotationRecord = annotationStage.value(QStringLiteral("result")).toMap();
     const QString annotationFlow = annotationRecord.value(QStringLiteral("flow_directory")).toString();
     const QString stagedAnnotationPath = QDir(annotationFlow).filePath(QStringLiteral("rtl/top.sv"));
@@ -367,10 +370,11 @@ int main(int argc, char **argv)
     ok &= require(writeFile(QDir(root).filePath(QStringLiteral("rtl/support/helper.v")),
                             "module helper; wire ready; endmodule\n"),
                   "create a project-local supplemental HDL module");
+    QVariantMap supplementalArguments = runArguments;
+    supplementalArguments.insert(QStringLiteral("source_extra_files"),
+                                 QVariantList{QStringLiteral("support/*.v")});
     const QVariantMap supplementalStage = ConfiguredDftFlowService::stage(project,
-        temp.filePath(QStringLiteral("supplemental-stage")),
-        QVariantMap{{QStringLiteral("source_extra_files"), QVariantList{QStringLiteral("support/*.v")}}},
-        agentRoot);
+        temp.filePath(QStringLiteral("supplemental-stage")), supplementalArguments, agentRoot);
     const QVariantMap supplementalStageRecord = supplementalStage.value(QStringLiteral("result")).toMap();
     const QVariantMap supplementalSource = supplementalStageRecord.value(QStringLiteral("source")).toMap();
     const QVariantMap supplementalEvidence = supplementalStageRecord.value(QStringLiteral("source_additions"))
