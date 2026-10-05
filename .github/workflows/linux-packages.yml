@@ -85,6 +85,12 @@ jobs:
             -DDFT_LLAMA_FINETUNE_BINARY="$GITHUB_WORKSPACE/build/llama.cpp/bin/llama-finetune" \
             > /tmp/studio-cmake-configure.log 2>&1; then
             cat /tmp/studio-cmake-configure.log
+            {
+              echo '## Studio CMake configure failed'
+              echo '```text'
+              tail -n 80 /tmp/studio-cmake-configure.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
             detail=$(tail -n 12 /tmp/studio-cmake-configure.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
             echo "::error title=Studio CMake configure failed::$detail"
             exit 1
@@ -95,6 +101,12 @@ jobs:
         run: |
           if ! cmake --build build/package --parallel 2 > /tmp/studio-cmake-build.log 2>&1; then
             tail -n 50 /tmp/studio-cmake-build.log
+            {
+              echo '## Studio C++ build failed'
+              echo '```text'
+              tail -n 80 /tmp/studio-cmake-build.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
             detail=$(tail -n 12 /tmp/studio-cmake-build.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
             echo "::error title=Studio C++ build failed::$detail"
             exit 1
