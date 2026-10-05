@@ -280,7 +280,7 @@ jobs:
           test -n "$image"
           install -m755 "$image" dist/dft-agent-studio-0.1.0-x86_64.AppImage
 
-      - name: Smoke test AppImage without Python
+      - name: Check AppImage contents without Python
         run: |
           image=dist/dft-agent-studio-0.1.0-x86_64.AppImage
           test -x "$image"
@@ -303,31 +303,48 @@ jobs:
           squashfs-root/usr/bin/dft-training-preflight --version
           ! find squashfs-root \( -type f -o -type l \) \( -name 'python' -o -name 'python3' -o -name 'python3.*' \) -print -quit | grep -q .
           ! strings squashfs-root/usr/bin/dft-agent-studio | grep -E 'gui_agent_worker|DFT_AGENT_PYTHON|python3'
-          docker run --rm -v "$GITHUB_WORKSPACE/squashfs-root:/app:ro" ubuntu:22.04 bash -euxc '
-            apt-get update
-            apt-get install -y xvfb xauth libgl1 libopengl0 libglib2.0-0 libsqlite3-0 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libxcb-render-util0 libxcb-image0 libxcb-util1 libxcb-xfixes0 libxcb-sync1 libxcb-xinput0
-            ! command -v python3
-            /app/usr/bin/dft-training-data --version
-            /app/usr/bin/dft-training-shards --version
-            /app/usr/bin/dft-training-preflight --version
-            /app/usr/bin/dft-evaluation-data --version
-            /app/usr/bin/dft-preference-data --version
-            /app/usr/bin/dft-agent-feedback --version
-            /app/usr/bin/dft-dataset-quality --version
-            /app/usr/bin/dft-scroll-trace-analyzer --version
-            /app/usr/bin/dft-session-audit --version
-            /app/usr/bin/dft-model-finetune --version
-            mkdir -p /tmp/app-home
-            set +e
-            HOME=/tmp/app-home QT_QPA_PLATFORM=xcb timeout 15s xvfb-run -a /app/AppRun >/tmp/appimage-smoke.log 2>&1
-            status=$?
-            set -e
-            if [ "$status" -ne 124 ]; then
-              cat /tmp/appimage-smoke.log
-              exit 1
-            fi
-            ! grep -E "Failed to start|Could not load the Qt platform plugin|module .* is not installed|No such file or directory" /tmp/appimage-smoke.log
-          '
+
+      - name: Smoke test AppImage launch in clean Ubuntu
+        run: |
+          if ! docker run --rm \
+            -v "$GITHUB_WORKSPACE/squashfs-root:/app:ro" \
+            ubuntu:22.04 bash -euxc '
+              apt-get update
+              apt-get install -y xvfb xauth libgl1 libopengl0 libglib2.0-0 libsqlite3-0 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libxcb-render-util0 libxcb-image0 libxcb-util1 libxcb-xfixes0 libxcb-sync1 libxcb-xinput0
+              ! command -v python3
+              /app/usr/bin/dft-training-data --version
+              /app/usr/bin/dft-training-shards --version
+              /app/usr/bin/dft-training-preflight --version
+              /app/usr/bin/dft-evaluation-data --version
+              /app/usr/bin/dft-preference-data --version
+              /app/usr/bin/dft-agent-feedback --version
+              /app/usr/bin/dft-dataset-quality --version
+              /app/usr/bin/dft-scroll-trace-analyzer --version
+              /app/usr/bin/dft-session-audit --version
+              /app/usr/bin/dft-model-finetune --version
+              mkdir -p /tmp/app-home
+              set +e
+              HOME=/tmp/app-home QT_QPA_PLATFORM=xcb timeout 15s xvfb-run -a /app/AppRun >/tmp/appimage-smoke.log 2>&1
+              status=$?
+              set -e
+              if [ "$status" -ne 124 ]; then
+                cat /tmp/appimage-smoke.log
+                exit 1
+              fi
+              ! grep -E "Failed to start|Could not load the Qt platform plugin|module .* is not installed|No such file or directory" /tmp/appimage-smoke.log
+            ' > /tmp/appimage-container-smoke.log 2>&1; then
+            cat /tmp/appimage-container-smoke.log
+            {
+              echo '## AppImage clean-container smoke test failed'
+              echo '```text'
+              tail -n 120 /tmp/appimage-container-smoke.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            detail=$(tail -n 60 /tmp/appimage-container-smoke.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
+            echo "::error title=AppImage clean-container smoke test failed::$detail"
+            exit 1
+          fi
+          cat /tmp/appimage-container-smoke.log
 
       - uses: actions/upload-artifact@v4
         with:
