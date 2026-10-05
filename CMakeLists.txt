@@ -10,14 +10,16 @@ set(DFT_LLAMA_FINETUNE_BINARY "" CACHE FILEPATH
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8 REQUIRED COMPONENTS Concurrent Core Gui Network Qml Quick QuickControls2 Widgets)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Concurrent Core Gui Network Qml Quick QuickControls2 Widgets)
 find_package(SQLite3 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(KF6Parts QUIET)
 
-qt_standard_project_setup(REQUIRES 6.8)
-qt_policy(SET QTP0004 NEW)
+qt_standard_project_setup(REQUIRES 6.5)
+if(QT_KNOWN_POLICY_QTP0004)
+    qt_policy(SET QTP0004 NEW)
+endif()
 
 qt_add_executable(dft-agent-studio
     src/main.cpp
