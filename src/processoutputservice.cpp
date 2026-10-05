@@ -292,9 +292,9 @@ void NativeProcessOutputService::finalizeProcess(int exitCode, QProcess::ExitSta
     if (m_finalized)
         return;
     drainOutput();
-    QString finalText(4, Qt::Uninitialized);
-    const auto finalized = m_decoder.finalize(finalText.data(), finalText.size());
-    finalText.resize(finalized.next - finalText.data());
+    QString finalText = m_decoder.decode(QByteArray(1, '\0'));
+    if (finalText.endsWith(QChar::Null))
+        finalText.chop(1);
     if (!finalText.isEmpty() && m_outputCallback)
         m_outputCallback(finalText);
     m_timeoutTimer.stop();
