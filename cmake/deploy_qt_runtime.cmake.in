@@ -1,0 +1,14 @@
+set(_dft_original_prefix "${CMAKE_INSTALL_PREFIX}")
+set(_dft_original_destdir "$ENV{DESTDIR}")
+
+if(NOT _dft_original_destdir STREQUAL "")
+    unset(ENV{DESTDIR})
+    set(CMAKE_INSTALL_PREFIX "${_dft_original_destdir}${CMAKE_INSTALL_PREFIX}")
+endif()
+
+include("@dft_agent_studio_deploy_script@")
+
+if(NOT _dft_original_destdir STREQUAL "")
+    set(CMAKE_INSTALL_PREFIX "${_dft_original_prefix}")
+    set(ENV{DESTDIR} "${_dft_original_destdir}")
+endif()

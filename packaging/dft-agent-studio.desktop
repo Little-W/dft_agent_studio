@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=DFT Agent Studio
+Comment=DFT project and agent workspace
+Exec=dft-agent-studio
+Icon=dft-agent-studio
+Terminal=false
+Categories=Development;Engineering;
+StartupNotify=true
