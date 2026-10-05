@@ -127,13 +127,17 @@ jobs:
         run: |
           if ! ctest --test-dir build/package --output-on-failure > /tmp/studio-ctest.log 2>&1; then
             cat /tmp/studio-ctest.log
+            ctest --test-dir build/package --rerun-failed --output-on-failure \
+              > /tmp/studio-ctest-failed.log 2>&1 || true
+            cat /tmp/studio-ctest-failed.log
             {
               echo '## Studio package tests failed'
               echo '```text'
+              cat /tmp/studio-ctest-failed.log
               tail -n 120 /tmp/studio-ctest.log
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
-            detail=$(tail -n 12 /tmp/studio-ctest.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
+            detail=$(tail -n 60 /tmp/studio-ctest-failed.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
             echo "::error title=Studio package tests failed::$detail"
             exit 1
           fi
