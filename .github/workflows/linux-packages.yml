@@ -243,16 +243,8 @@ jobs:
           AppDir/usr/bin/dft-model-finetune --version
           AppDir/usr/bin/dft-training-preflight --version
 
-      - name: Bundle Qt and create AppImage
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: "1"
-          QML_SOURCES_PATHS: ${{ github.workspace }}/qml
-          LINUXDEPLOY_OUTPUT_VERSION: 0.1.0
-          LINUXDEPLOY_OUTPUT_APP_NAME: dft-agent-studio
+      - name: Download AppImage packaging tools
         run: |
-          set -Eeuo pipefail
-          exec > >(tee /tmp/appimage-bundle.log) 2>&1
-          trap 'rc=$?; { echo "## AppImage bundling failed"; echo "\`\`\`text"; tail -n 120 /tmp/appimage-bundle.log; echo "\`\`\`"; } >> "$GITHUB_STEP_SUMMARY"; exit "$rc"' ERR
           curl --http1.1 --fail --location --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 10 --max-time 300 \
             https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage \
             --output linuxdeploy-x86_64.AppImage
@@ -262,7 +254,21 @@ jobs:
           chmod +x linuxdeploy-x86_64.AppImage linuxdeploy-plugin-qt-x86_64.AppImage
           export QMAKE="$(command -v qmake6 || command -v qmake)"
           test -x "$QMAKE"
+
+      - name: Bundle Qt into AppImage directory
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+          QML_SOURCES_PATHS: ${{ github.workspace }}/qml
+          LINUXDEPLOY_OUTPUT_VERSION: 0.1.0
+          LINUXDEPLOY_OUTPUT_APP_NAME: dft-agent-studio
+        run: |
+          export QMAKE="$(command -v qmake6 || command -v qmake)"
           ./linuxdeploy-x86_64.AppImage --appdir AppDir --desktop-file AppDir/usr/share/applications/dft-agent-studio.desktop --icon-file AppDir/usr/share/icons/hicolor/512x512/apps/dft-agent-studio.png --plugin qt
+
+      - name: Create AppImage executable
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: |
           ./linuxdeploy-x86_64.AppImage --appimage-extract
           curl --http1.1 --fail --location --retry 5 --connect-timeout 10 --max-time 120 \
             https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 \
