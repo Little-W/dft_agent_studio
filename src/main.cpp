@@ -92,10 +92,10 @@ int main(int argc, char *argv[]) {
         std::fprintf(stderr, "Could not load the embedded MiSans font; using the system default.\n");
     }
     QQuickStyle::setStyle("Basic");
-    qmlRegisterType<SyntaxHighlighter>("DftAgentStudio", 1, 0, "SyntaxHighlighter");
+    qmlRegisterType<SyntaxHighlighter>("DftAgentStudio.Native", 1, 0, "SyntaxHighlighter");
     qmlRegisterType<KonsoleTerminalItem>("DftAgentStudio.Native", 1, 0, "KonsoleTerminal");
-    qmlRegisterType<WheelZoomItem>("DftAgentStudio", 1, 0, "WheelZoomItem");
-    qmlRegisterType<WheelScrollAnimator>("DftAgentStudio", 1, 0, "WheelScrollAnimator");
+    qmlRegisterType<WheelZoomItem>("DftAgentStudio.Native", 1, 0, "WheelZoomItem");
+    qmlRegisterType<WheelScrollAnimator>("DftAgentStudio.Native", 1, 0, "WheelScrollAnimator");
 
     QCommandLineParser parser;
     parser.setApplicationDescription("A local, evidence-reviewed DFT Agent control center");

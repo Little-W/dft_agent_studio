@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import DftAgentStudio.Native 1.0
 import "WheelScroll.js" as WheelScroll
 
 Item {
