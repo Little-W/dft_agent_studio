@@ -185,7 +185,7 @@ jobs:
             -v "$GITHUB_WORKSPACE/package-smoke:/packages:ro" \
             ubuntu:22.04 bash -euxc '
               apt-get update
-              apt-get install -y xvfb xauth libgl1 libegl1 libglib2.0-0 libyaml-cpp0.7 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libxcb-render-util0 libxcb-image0 libxcb-util1 libxcb-xfixes0 libxcb-sync1 libxcb-xinput0
+              apt-get install -y xvfb xauth libgl1 libegl1 libglib2.0-0 libsqlite3-0 libyaml-cpp0.7 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libxcb-render-util0 libxcb-image0 libxcb-util1 libxcb-xfixes0 libxcb-sync1 libxcb-xinput0
               ! command -v python3
               for variant in deb rpm; do
                 "/packages/$variant/usr/bin/dft-training-data" --version
@@ -292,7 +292,7 @@ jobs:
           ! strings squashfs-root/usr/bin/dft-agent-studio | grep -E 'gui_agent_worker|DFT_AGENT_PYTHON|python3'
           docker run --rm -v "$GITHUB_WORKSPACE/squashfs-root:/app:ro" ubuntu:22.04 bash -euxc '
             apt-get update
-            apt-get install -y xvfb xauth libgl1 libglib2.0-0 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libxcb-render-util0 libxcb-image0 libxcb-util1 libxcb-xfixes0 libxcb-sync1 libxcb-xinput0
+            apt-get install -y xvfb xauth libgl1 libglib2.0-0 libsqlite3-0 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libfontconfig1 libx11-xcb1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libxcb-render-util0 libxcb-image0 libxcb-util1 libxcb-xfixes0 libxcb-sync1 libxcb-xinput0
             ! command -v python3
             /app/usr/bin/dft-training-data --version
             /app/usr/bin/dft-training-shards --version
