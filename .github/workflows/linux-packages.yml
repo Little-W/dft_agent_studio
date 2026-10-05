@@ -267,13 +267,15 @@ jobs:
 
       - name: Create AppImage executable
         run: |
-          ./linuxdeploy-x86_64.AppImage --appimage-extract
+          curl --http1.1 --fail --location --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 10 --max-time 300 \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage \
+            --output appimagetool-x86_64.AppImage
+          chmod +x appimagetool-x86_64.AppImage
           curl --http1.1 --fail --location --retry 5 --connect-timeout 10 --max-time 120 \
             https://github.com/AppImage/type2-runtime/releases/download/continuous/runtime-x86_64 \
             --output runtime-x86_64
-          appimagetool=squashfs-root/plugins/linuxdeploy-plugin-appimage/appimagetool-prefix/usr/bin/appimagetool
-          test -x "$appimagetool"
-          ARCH=x86_64 "$appimagetool" --runtime-file "$GITHUB_WORKSPACE/runtime-x86_64" AppDir
+          APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 ./appimagetool-x86_64.AppImage \
+            --runtime-file "$GITHUB_WORKSPACE/runtime-x86_64" AppDir
           image=$(find . -maxdepth 1 -type f -name '*.AppImage' ! -name 'linuxdeploy*.AppImage' -print -quit)
           test -n "$image"
           install -m755 "$image" dist/dft-agent-studio-0.1.0-x86_64.AppImage
