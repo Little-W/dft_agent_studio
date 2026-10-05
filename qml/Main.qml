@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
 import QtQuick.Window
+import DftAgentStudio.Native 1.0
 import "components" as UI
 
 ApplicationWindow {

@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
     }
     QQuickStyle::setStyle("Basic");
     qmlRegisterType<SyntaxHighlighter>("DftAgentStudio", 1, 0, "SyntaxHighlighter");
-    qmlRegisterType<KonsoleTerminalItem>("DftAgentStudio", 1, 0, "KonsoleTerminal");
+    qmlRegisterType<KonsoleTerminalItem>("DftAgentStudio.Native", 1, 0, "KonsoleTerminal");
     qmlRegisterType<WheelZoomItem>("DftAgentStudio", 1, 0, "WheelZoomItem");
     qmlRegisterType<WheelScrollAnimator>("DftAgentStudio", 1, 0, "WheelScrollAnimator");
 
