@@ -822,6 +822,8 @@ if(BUILD_TESTING)
     add_test(NAME dft-agent-studio-backend COMMAND dft-agent-studio-backend-check)
     add_test(NAME dft-agent-tool-runtime COMMAND dft-agent-studio-backend-check --agent-tool-runtime)
     add_test(NAME dft-agent-studio-live-steering COMMAND dft-agent-studio-backend-check --live-steering)
+    set_tests_properties(dft-agent-studio-backend dft-agent-tool-runtime dft-agent-studio-live-steering
+        PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
     add_executable(dft-responses-tool-transcript-compaction-check
         tests/responsestooltranscript_compaction_check.cpp

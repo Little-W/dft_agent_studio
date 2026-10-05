@@ -23,6 +23,12 @@ bool require(bool condition, const char *message)
     return false;
 }
 
+void diagnoseStage(const char *label, const QVariantMap &stage)
+{
+    std::fprintf(stderr, "DIAG %s: %s\n", label,
+                 QJsonDocument::fromVariant(stage).toJson(QJsonDocument::Compact).constData());
+}
+
 bool writeFile(const QString &path, const QByteArray &content, bool executable = false)
 {
     if (!QDir().mkpath(QFileInfo(path).absolutePath()))
@@ -272,7 +278,7 @@ int main(int argc, char **argv)
     QFile stagedInput(stagedInputList);
     const bool stagedInputReadable = stagedInput.open(QIODevice::ReadOnly | QIODevice::Text);
     const QString stagedInputText = stagedInputReadable ? QString::fromUtf8(stagedInput.readAll()) : QString{};
-    ok &= require(compatibilityStage.value(QStringLiteral("ok")).toBool()
+    const bool compatibilityStagePassed = compatibilityStage.value(QStringLiteral("ok")).toBool()
                       && compatibilitySource.value(QStringLiteral("rtl_compile_files")).toStringList()
                              == QStringList{QStringLiteral("top.sv")}
                       && compatibilitySynthesis.value(QStringLiteral("analyze_format")).toString()
@@ -285,7 +291,10 @@ int main(int argc, char **argv)
                       && exclusionEvidence.value(QStringLiteral("safe_exclusion")).toBool()
                       && exclusionEvidence.value(QStringLiteral("unsupported_constructs")).toList()
                              .contains(QStringLiteral("tranif"))
-                      && !exclusionEvidence.value(QStringLiteral("sha256")).toString().isEmpty(),
+                      && !exclusionEvidence.value(QStringLiteral("sha256")).toString().isEmpty();
+    if (!compatibilityStagePassed)
+        diagnoseStage("source exclusion", compatibilityStage);
+    ok &= require(compatibilityStagePassed,
                   "iteration exclusion stages only a proven unreferenced unsupported module and records its evidence");
 
     QVariantMap verilogFormatProject = project;
@@ -304,7 +313,7 @@ int main(int argc, char **argv)
     const bool verilogFormatDriverReadable = verilogFormatDriver.open(QIODevice::ReadOnly | QIODevice::Text);
     const QString verilogFormatDriverText = verilogFormatDriverReadable
         ? QString::fromUtf8(verilogFormatDriver.readAll()) : QString{};
-    ok &= require(verilogFormatStage.value(QStringLiteral("ok")).toBool()
+    const bool verilogFormatStagePassed = verilogFormatStage.value(QStringLiteral("ok")).toBool()
                       && verilogFormatSource.value(QStringLiteral("synthesis_configuration")).toMap()
                              .value(QStringLiteral("analyze_format")).toString() == QStringLiteral("verilog")
                       && verilogFormatSource.value(QStringLiteral("synthesis_configuration")).toMap()
@@ -312,7 +321,10 @@ int main(int argc, char **argv)
                              == QStringLiteral("metadata.dft_execution.language")
                       && verilogFormatDriverText.contains(QStringLiteral("-format {verilog}"))
                       && verilogFormatDriverText.contains(QStringLiteral("reports/analyze.log"))
-                      && verilogFormatDriverText.contains(QStringLiteral("HDL analysis failed")),
+                      && verilogFormatDriverText.contains(QStringLiteral("HDL analysis failed"));
+    if (!verilogFormatStagePassed)
+        diagnoseStage("configured HDL format", verilogFormatStage);
+    ok &= require(verilogFormatStagePassed,
                   "stage evidence records the exact configured HDL format used by generated Tcl");
 
     const QString annotationRoot = temp.filePath(QStringLiteral("annotation-project"));
@@ -338,7 +350,7 @@ int main(int argc, char **argv)
     const QVariantMap annotationTransform = annotationTransforms.value(0).toMap();
     QFile unchangedAnnotationSource(annotationSourcePath);
     const bool unchangedAnnotationReadable = unchangedAnnotationSource.open(QIODevice::ReadOnly);
-    ok &= require(annotationStage.value(QStringLiteral("ok")).toBool()
+    const bool annotationStagePassed = annotationStage.value(QStringLiteral("ok")).toBool()
                       && stagedAnnotationReadable && unchangedAnnotationReadable
                       && stagedAnnotationText.contains("reg [3:0] state;")
                       && !stagedAnnotationText.contains("synopsys enum_state")
@@ -346,7 +358,10 @@ int main(int argc, char **argv)
                       && annotationTransforms.size() == 1
                       && annotationTransform.value(QStringLiteral("transformed_lines")).toList() == QVariantList{2}
                       && annotationTransform.value(QStringLiteral("original_sha256")).toString().size() == 64
-                      && annotationTransform.value(QStringLiteral("staged_sha256")).toString().size() == 64,
+                      && annotationTransform.value(QStringLiteral("staged_sha256")).toString().size() == 64;
+    if (!annotationStagePassed)
+        diagnoseStage("source annotation adapter", annotationStage);
+    ok &= require(annotationStagePassed,
                   "explicit parser-compatibility mode normalizes only isolated staged RTL and records provenance");
 
     ok &= require(writeFile(QDir(root).filePath(QStringLiteral("rtl/support/helper.v")),
@@ -365,13 +380,16 @@ int main(int argc, char **argv)
     const bool supplementalFilelistReadable = supplementalFilelist.open(QIODevice::ReadOnly | QIODevice::Text);
     const QString supplementalFilelistText = supplementalFilelistReadable
         ? QString::fromUtf8(supplementalFilelist.readAll()) : QString{};
-    ok &= require(supplementalStage.value(QStringLiteral("ok")).toBool()
+    const bool supplementalStagePassed = supplementalStage.value(QStringLiteral("ok")).toBool()
                       && supplementalSource.value(QStringLiteral("rtl_compile_files")).toStringList()
                              .contains(QStringLiteral("support/helper.v"))
                       && supplementalFilelistText.contains(QStringLiteral("./rtl/support/helper.v"))
                       && supplementalEvidence.value(QStringLiteral("module_names")).toStringList()
                              .contains(QStringLiteral("helper"))
-                      && !supplementalEvidence.value(QStringLiteral("sha256")).toString().isEmpty(),
+                      && !supplementalEvidence.value(QStringLiteral("sha256")).toString().isEmpty();
+    if (!supplementalStagePassed)
+        diagnoseStage("supplemental sources", supplementalStage);
+    ok &= require(supplementalStagePassed,
                   "iteration adds bounded project-local HDL sources and records module/hash evidence");
     const QVariantMap unsafeSupplementalStage = ConfiguredDftFlowService::stage(project,
         temp.filePath(QStringLiteral("unsafe-supplemental-stage")),
@@ -1559,13 +1577,18 @@ int main(int argc, char **argv)
     const QVariantMap mbistResult = mbistPayload.value(QStringLiteral("mbist")).toMap();
     const QVariantMap mbistSummary = mbistResult.value(QStringLiteral("summary")).toMap();
     const QStringList mbistCompileCommand = mbistResult.value(QStringLiteral("compile_command")).toStringList();
-    ok &= require(mbistReadinessEnvelope.value(QStringLiteral("ok")).toBool()
+    const bool mbistStagingPassed = mbistReadinessEnvelope.value(QStringLiteral("ok")).toBool()
                       && mbistReadiness.value(QStringLiteral("ready")).toBool()
                       && mbistStage.value(QStringLiteral("ok")).toBool()
                       && QFileInfo::exists(QDir(mbistFlow).filePath(QStringLiteral("mbist_sim/mbist/mbist_markers.svh")))
-                      && stagedMbist.value(QStringLiteral("include_mode")).toString() == QStringLiteral("compile_parents"),
+                      && stagedMbist.value(QStringLiteral("include_mode")).toString() == QStringLiteral("compile_parents");
+    if (!mbistStagingPassed) {
+        diagnoseStage("MBIST readiness", mbistReadinessEnvelope);
+        diagnoseStage("MBIST staging", mbistStage);
+    }
+    ok &= require(mbistStagingPassed,
                   "native MBIST readiness and staging validate project inputs and preserve declared compile-parent headers");
-    ok &= require(mbistRun.value(QStringLiteral("ok")).toBool()
+    const bool mbistRunPassed = mbistRun.value(QStringLiteral("ok")).toBool()
                       && mbistPayload.value(QStringLiteral("status")).toString() == QStringLiteral("verified")
                       && mbistResult.value(QStringLiteral("completed_cleanly")).toBool()
                       && mbistSummary.value(QStringLiteral("declared_case_coverage_percent")).toDouble() == 100.0
@@ -1573,7 +1596,10 @@ int main(int argc, char **argv)
                           == QStringList{QStringLiteral("MBIST_PASS")}
                       && mbistCompileCommand.contains(QStringLiteral("-Wall"))
                       && mbistResult.value(QStringLiteral("run_command")).toStringList().contains(QStringLiteral("-v"))
-                      && QFileInfo::exists(mbistResult.value(QStringLiteral("summary_file")).toString()),
+                      && QFileInfo::exists(mbistResult.value(QStringLiteral("summary_file")).toString());
+    if (!mbistRunPassed)
+        diagnoseStage("MBIST run", mbistRun);
+    ok &= require(mbistRunPassed,
                   "native MBIST compiles and runs with Icarus, enforces pass markers, records diagnostics, and verifies evidence");
     QVariantMap noEvidenceArguments = runArguments;
     noEvidenceArguments.insert(QStringLiteral("dc_shell"), fakeDcNoReports);

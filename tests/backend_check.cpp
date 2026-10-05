@@ -30,6 +30,7 @@
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -6140,7 +6141,7 @@ bool studioToolServiceCheck() {
 int main(int argc, char *argv[]) {
     if (argc >= 2 && QString::fromLocal8Bit(argv[1]) == QStringLiteral("--fake-llama-server"))
         return fakeLlamaServerMain(argc - 1, argv + 1);
-    QCoreApplication application(argc, argv);
+    QGuiApplication application(argc, argv);
     if (argc == 2 && QString::fromLocal8Bit(argv[1]) == QStringLiteral("--agent-tool-runtime")) {
         const bool passed = agentToolServiceRuntimeCheck();
         if (passed)
