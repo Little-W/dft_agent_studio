@@ -51,9 +51,19 @@ jobs:
         run: |
           ldd --version | head -n 1 | grep -F "2.35"
 
+      - name: Cache llama.cpp source and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            third_party/llama.cpp
+            build/llama.cpp
+          key: ${{ runner.os }}-llama-b9999-gcc-cmake-v1
+
       - name: Build standalone llama.cpp runtime and training executable
         run: |
-          git clone --depth 1 --branch b9999 https://github.com/ggml-org/llama.cpp.git third_party/llama.cpp
+          if [ ! -d third_party/llama.cpp/.git ]; then
+            git clone --depth 1 --branch b9999 https://github.com/ggml-org/llama.cpp.git third_party/llama.cpp
+          fi
           test "$(git -C third_party/llama.cpp rev-parse HEAD)" = "47c786924ad1ab7e91da2cdc72fcdb563780c2bd"
           cmake -S third_party/llama.cpp -B build/llama.cpp -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
@@ -115,7 +125,19 @@ jobs:
 
       - name: Run package checks
         run: |
-          ctest --test-dir build/package --output-on-failure
+          if ! ctest --test-dir build/package --output-on-failure > /tmp/studio-ctest.log 2>&1; then
+            cat /tmp/studio-ctest.log
+            {
+              echo '## Studio package tests failed'
+              echo '```text'
+              tail -n 120 /tmp/studio-ctest.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            detail=$(tail -n 12 /tmp/studio-ctest.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')
+            echo "::error title=Studio package tests failed::$detail"
+            exit 1
+          fi
+          cat /tmp/studio-ctest.log
 
       - name: Create packages
         run: |
